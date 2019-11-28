@@ -32,8 +32,21 @@ class Field():
     def placeFigure(self, figure, offset = (0,0)):
         #TODO Fehlererkennung
         h, w = np.array(figure).shape
+        figure = np.array(figure)
         x1, y1 = offset
         x2, y2 = x1+w, y1+h
+
+        #deal with offsets below 0:
+        if x1 < 0:
+            figure = figure[:, -x1:w]
+            x1 = 0
+
+        if y1 < 0:
+            figure = figure[-y1:h, :]
+            y1 = 0
+
+        #TODO deal with offsets above h/w
+
         self.field[y1:y2, x1:x2] = figure
         self._initializeCountNeighbours()
 
