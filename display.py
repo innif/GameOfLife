@@ -21,13 +21,17 @@ class Display():
     def setField(self, field):
         self.field = field
 
-    def drawPixel(self, pos, color = (0,0,255)):
+    def setColors(sekf, colors):
+        pass
+        #TODO pass color as Lexika
+
+    def drawPixel(self, pos, color = (0,223,252)):
         x, y = pos
         xPixel, yPixel = int(x*self.blockSize), int(y*self.blockSize)
         pygame.draw.rect(self.screen, color, (xPixel, yPixel, self.blockSizePixel, self.blockSizePixel))
 
     def drawField(self, field):
-        self.screen.fill((200,200,200))
+        self.screen.fill((52,56,56))
         w, h = self.fieldSize
         for y in range(0, h):
             for x in range(0, w):
@@ -63,4 +67,4 @@ class Display():
         for y, row in enumerate(figure):
             for x, pixel in enumerate(row):
                 if(pixel == 1):
-                    self.drawPixel((drawX+x, drawY+y), color = (180,180,255))
+                    self.drawPixel((drawX+x, drawY+y), color = (0,95,107))
