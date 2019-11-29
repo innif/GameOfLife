@@ -10,7 +10,7 @@ from field import Field
 from display import Display
 import figures
 
-size = 50,50
+size = 300,300
 
 f = Field(size=size, initValue=0)
 
@@ -24,4 +24,7 @@ while(True):
     d.loadFigure(figures.gliderDiagonalNE)
     d.drawField(f)
     d.mainloop()
+    start_time=time.time()
     f.update()
+    stop_time=time.time()
+    print(stop_time-start_time)
