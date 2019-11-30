@@ -7,6 +7,9 @@ class Field():
         self.size = w, h = size
         self.field = self._generateField(initValue)
 
+    def getArray(self):
+        return self.field
+
     def getSize(self):
         return self.size
 
@@ -71,16 +74,7 @@ class Field():
                 pos = x, y
                 print('#' if self.getPixel(pos)>0 else ' ', end='')
             print('')
-
-    def _setPixel(self, pos, state):
-        x, y = pos
-        self.field[y, x] = state
-
-    def _generateField(self, value):
-        w, h = self.size
-        field = np.full((h, w), value).astype(np.int8)
-        return field
-
+            
     def _neighboursMatrix(self):
         kernel = np.array(
             [
@@ -91,3 +85,13 @@ class Field():
         )
         neighboursCount = convolve2d(self.field, kernel, mode='same', boundary='wrap')
         return neighboursCount
+
+    def _setPixel(self, pos, state):
+        x, y = pos
+        self.field[y, x] = state
+
+    def _generateField(self, value):
+        w, h = self.size
+        field = np.full((h, w), value).astype(np.int8)
+        return field
+

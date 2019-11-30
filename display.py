@@ -1,14 +1,16 @@
 import pygame
 import sys
+import numpy as np
 
 class Display():
     def __init__(self, fieldSize, windowHeight = 400):
         pygame.init()
         self.fieldSize = w, h = fieldSize 
-        self.windowHeight = windowHeight
         self.blockSize = windowHeight/h
+        self.windowHeight = windowHeight
         self.blockSizePixel = round(self.blockSize)
-        self.screen = pygame.display.set_mode((int(self.blockSize*w), int(self.blockSize*h)))
+        self.screenSize = int(self.blockSize*w), int(self.blockSize*h)
+        self.screen = pygame.display.set_mode(self.screenSize)
         self.loadedFigure = None
         self.field = None # must be set for placing Figures
         self.loadedFigureShape = (0,0)
@@ -31,17 +33,36 @@ class Display():
 
     def drawField(self, field):
         self.screen.fill((52,56,56))
-        w, h = self.fieldSize
-        for y in range(0, h):
-            for x in range(0, w):
-                pos = x,y
-                if field.getPixel(pos) == 1:
-                    self.drawPixel(pos)
+        field = field.getArray()
+        field = np.swapaxes(field,0,1)
+
+        pixels = np.full((field.shape[0], field.shape[1], 3), 0)
+        pixels[:,:,0] = np.where(field, 0, 52)
+        pixels[:,:,1] = np.where(field, 223, 56)
+        pixels[:,:,2] = np.where(field, 252, 56)
+
+        if self.loadedFigure is not None:
+            pos = pygame.mouse.get_pos()
+
+            w, h = self.loadedFigureShape
+            drawX, drawY = int(pos[0]/self.blockSize- w/2), int(pos[1]/self.blockSize - h/2)
+            
+            for y, row in enumerate(self.loadedFigure):
+                for x, pixel in enumerate(row):
+                    if(pixel == 1):
+                        try:
+                            pixels[drawX+x, drawY+y,0] = 0
+                            pixels[drawX+x, drawY+y,1] = 95
+                            pixels[drawX+x, drawY+y,2] = 107
+                        except:
+                            pass
+
+        s = pygame.pixelcopy.make_surface(pixels)
+        s = pygame.transform.scale(s, self.screenSize)
+
+        self.screen.blit(s, (0,0))
         
     def mainloop(self):
-        if self.loadedFigure is not None:
-            self.previewFigure(self.loadedFigure)
-
         for event in pygame.event.get():
             if event.type==pygame.QUIT:
                 sys.exit()
@@ -56,14 +77,3 @@ class Display():
                     self.loadedFigure = None
 
         pygame.display.update()
-
-    def previewFigure(self, figure):
-        pos = pygame.mouse.get_pos()
-
-        w, h = self.loadedFigureShape
-        drawX, drawY = round(pos[0]/self.blockSize- w/2), round(pos[1]/self.blockSize - h/2)
-        
-        for y, row in enumerate(figure):
-            for x, pixel in enumerate(row):
-                if(pixel == 1):
-                    self.drawPixel((drawX+x, drawY+y), color = (0,95,107))
