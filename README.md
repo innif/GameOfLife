@@ -11,11 +11,7 @@ You can download Python [here](https://www.python.org/downloads/).
 
 After installing Python, you need to add the libraries. To do this, you need to open a terminal and type:
 ```bash
-python3 -m pip install numpy
-```
-and
-```bash
-python3 -m pip install pygame
+python3 -m  pip install -r requirements.txt
 ```
 
 That's it. You can now download the sources and start the game by running main.py.
