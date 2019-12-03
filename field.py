@@ -62,9 +62,25 @@ class Field():
         self.field = self.field*survivorsA*survivorsB
         self.field = np.where(neighboursCount == 3, 1, self.field)
 
-    def loadFromFile(self, path):
-        #TODO
-        pass
+    def loadFromFile(self, path, offset = (0,0)):
+        x, y = offset
+        f = open(path, 'r')
+        lines = f.readlines()
+        h = len(lines)
+        w = len(lines[0])-1 # länge des ersten Strings -1, da jede Zeile auf \n endet
+
+        if w+x > self.size[0] or h+y > self.size[1]:
+            print('Field to small')
+            #TODO allow to add parts of the field, if field is to small
+            return
+
+        field = []
+        for l in lines:
+            l = [char for char in l[0:w]]
+            field.append(l)
+        field = np.array(field)
+        field = np.where(field == '#', 1, 0)
+        self.field[y:h+y, x:w+x] = field
 
     def print(self):
         print('Field: ')
