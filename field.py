@@ -15,7 +15,7 @@ class Field():
 
     def fillRandom(self, seed = None):
         if seed is not None:
-            random.seed(seed) #FIXME seed don't work
+            np.random.seed(seed)
         w, h = self.size
         r = np.random.rand(h, w)
         self.field = np.where(r > 0.5, 1, 0).astype(np.int8)

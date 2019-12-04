@@ -10,12 +10,12 @@ from field import Field
 from display import Display
 import figures
 
-size = 50, 50
+size = 10, 10
 
 f = Field(size=size, initValue=0)
 
 #f.placeFigure(figures.pentadecathlon, (10,10))
-#f.fillRandom(seed=0)
+f.fillRandom(seed=0)
 
 d = Display(f.getSize(), 800)
 d.setField(f)
