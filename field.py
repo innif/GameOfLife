@@ -1,9 +1,10 @@
 import random
 import numpy as np
 from scipy.signal import convolve2d
+import logging
 
 class Field():
-    def __init__(self, size, initValue = 0):
+    def __init__(self, size = (0,0), initValue = 0):
         self.size = w, h = size
         self.field = self._generateField(initValue)
 
@@ -24,8 +25,22 @@ class Field():
         self.field = self._generateField(value)
 
     def setField(self, field):
-        #TODO Fehlererkennung
-        self.field = np.array(field).astype(np.int8)
+        ''' sets the field to the given value. 0 means dead, everything else means alive (should be a byte-number)
+            
+            field -> two dimensional list
+        '''
+
+        try:
+            newField = np.array(field).astype(np.int8) # Input is converted to numpy array
+            if len(newField.shape) is not 2: # reads number of dimensions of numpy array
+                logging.warning('Input in setField has the wrong shape. It should be a two dimensional List. setField() skiped')
+                return
+            newField = np.where(newField == 0, 0, 1)
+            self.size = newField.shape # update field size
+            self.field = newField
+
+        except ValueError:
+            logging.warning('Wrong input type in setField. The input could not be converted to a numpy-array. Try a two dimensional List')
 
     def placeFigure(self, figure, offset = (0,0)):
         #TODO Fehlererkennung

@@ -16,6 +16,7 @@ f = Field(size=size, initValue=0)
 
 #f.placeFigure(figures.pentadecathlon, (10,10))
 f.fillRandom(seed=0)
+f.setField('Hallo')
 
 d = Display(f.getSize(), 800)
 d.setField(f)

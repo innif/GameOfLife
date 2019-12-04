@@ -1,6 +1,7 @@
 import pygame
 import sys
 import numpy as np
+import logging
 
 class Display():
     def __init__(self, fieldSize, windowHeight = 400):
