@@ -1,6 +1,7 @@
 import pygame
 import sys
 import numpy as np
+import colorsets
 
 class Display():
     def __init__(self, fieldSize, windowHeight = 400):
@@ -14,7 +15,7 @@ class Display():
         self.loadedFigure = None
         self.field = None # must be set for placing Figures
         self.loadedFigureShape = (0,0)
-
+        self.colors = colorsets.blue
     def loadFigure(self, figure):
         self.loadedFigure = figure
         self.loadedFigureShape = len(figure[0]), len(figure)
@@ -22,7 +23,7 @@ class Display():
     def setField(self, field):
         self.field = field
 
-    def setColors(sekf, colors):
+    def setColors(self, colors):
         pass
         #TODO pass color as Lexika
 
@@ -31,15 +32,28 @@ class Display():
         xPixel, yPixel = int(x*self.blockSize), int(y*self.blockSize)
         pygame.draw.rect(self.screen, color, (xPixel, yPixel, self.blockSizePixel, self.blockSizePixel))
 
+    def drawGrid(self, color):
+        blockSizeX = self.screenSize[0]/self.fieldSize[0]
+        blockSizeY = self.screenSize[1]/self.fieldSize[1]
+
+        if blockSizeX < 10 or blockSizeY < 10:
+            return
+
+        for x in range(1,self.fieldSize[0]):
+            pygame.draw.line(self.screen, color, (x*blockSizeX, 0), (x*blockSizeX, self.screenSize[1]))
+        
+        for y in range(1,self.fieldSize[1]):
+            pygame.draw.line(self.screen, color, (0, y*blockSizeY), (self.screenSize[0], y*blockSizeY))
+
     def drawField(self, field):
-        self.screen.fill((52,56,56))
+        self.screen.fill(self.colors.get('background'))
         field = field.getArray()
         field = np.swapaxes(field,0,1)
 
         pixels = np.full((field.shape[0], field.shape[1], 3), 0)
-        pixels[:,:,0] = np.where(field, 0, 52)
-        pixels[:,:,1] = np.where(field, 223, 56)
-        pixels[:,:,2] = np.where(field, 252, 56)
+        pixels[:,:,0] = np.where(field, self.colors.get('pixel')[0], self.colors.get('background')[0])
+        pixels[:,:,1] = np.where(field, self.colors.get('pixel')[1], self.colors.get('background')[1])
+        pixels[:,:,2] = np.where(field, self.colors.get('pixel')[2], self.colors.get('background')[2])
 
         if self.loadedFigure is not None:
             pos = pygame.mouse.get_pos()
@@ -51,9 +65,7 @@ class Display():
                 for x, pixel in enumerate(row):
                     if(pixel == 1):
                         try:
-                            pixels[drawX+x, drawY+y,0] = 0
-                            pixels[drawX+x, drawY+y,1] = 95
-                            pixels[drawX+x, drawY+y,2] = 107
+                            pixels[drawX+x, drawY+y, :] = self.colors.get('preview')
                         except:
                             pass
 
@@ -61,6 +73,10 @@ class Display():
         s = pygame.transform.scale(s, self.screenSize)
 
         self.screen.blit(s, (0,0))
+
+        if self.colors.get('gridVisible'):
+            self.drawGrid(self.colors.get('grid'))
+
         
     def mainloop(self):
         for event in pygame.event.get():
