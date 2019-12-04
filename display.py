@@ -13,6 +13,7 @@ class Display():
         self.blockSizePixel = round(self.blockSize)
         self.screenSize = int(self.blockSize*w), int(self.blockSize*h)
         self.screen = pygame.display.set_mode(self.screenSize)
+        pygame.display.set_caption("Conway's Game of Life")
         self.loadedFigure = None
         self.field = None # must be set for placing Figures
         self.loadedFigureShape = (0,0)

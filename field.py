@@ -5,24 +5,24 @@ import logging
 
 class Field():
     def __init__(self, size = (0,0), initValue = 0):
-        self.size = w, h = size
-        self.field = self._generateField(initValue)
+        self.size_ = w, h = size
+        self.field_ = self._generateField(initValue)
 
     def getArray(self):
-        return self.field
+        return self.field_
 
     def getSize(self):
-        return self.size
+        return self.size_
 
     def fillRandom(self, seed = None):
         if seed is not None:
             np.random.seed(seed)
-        w, h = self.size
+        w, h = self.size_
         r = np.random.rand(h, w)
-        self.field = np.where(r > 0.5, 1, 0).astype(np.int8)
+        self.field_ = np.where(r > 0.5, 1, 0).astype(np.int8)
 
     def fillField(self, value):
-        self.field = self._generateField(value)
+        self.field_ = self._generateField(value)
 
     def setField(self, field):
         ''' sets the field to the given value. 0 means dead, everything else means alive (should be a byte-number)
@@ -33,9 +33,9 @@ class Field():
         if newField is None:
             logging.warning('setField() failed')
             return
-        self.size = newField.shape # update field size
-        self.size = self.size[1], self.size[0]
-        self.field = newField
+        self.size_ = newField.shape # update field size
+        self.size_ = self.size_[1], self.size_[0]
+        self.field_ = newField
 
     def placeFigure(self, figure, offset = (0,0)):
         ''' places a figure at the given offset
@@ -48,26 +48,26 @@ class Field():
             return
         hFig, wFig = figure.shape[:2] 
         x1, y1 = offset
-        w, h = self.size
+        w, h = self.size_
 
         for x in range(wFig):
             for y in range(hFig):
-                self.field[(y1+y)%h, (x1+x)%w] = figure[y, x]
+                self.field_[(y1+y)%h, (x1+x)%w] = figure[y, x]
 
     def getField(self):
-        return self.field
+        return self.field_
 
     def getPixel(self, pos):
         x, y = pos
-        # print(str(pos)+' - '+str(self.field[x ,y]))
-        return self.field[y, x]
+        # print(str(pos)+' - '+str(self.field_[x ,y]))
+        return self.field_[y, x]
 
     def update(self):
         neighboursCount = self._neighboursMatrix()
         survivorsA = neighboursCount >= 2
         survivorsB = neighboursCount <= 3
-        self.field = self.field*survivorsA*survivorsB
-        self.field = np.where(neighboursCount == 3, 1, self.field)
+        self.field_ = self.field_*survivorsA*survivorsB
+        self.field_ = np.where(neighboursCount == 3, 1, self.field_)
 
     def loadFromFile(self, path):
         f = open(path, 'r')
@@ -85,7 +85,7 @@ class Field():
 
     def print(self):
         print('Field: ')
-        w, h = self.size
+        w, h = self.size_
         for y in range(h):
             for x in range(w):
                 pos = x, y
@@ -100,15 +100,15 @@ class Field():
                 [1,1,1],
             ]
         )
-        neighboursCount = convolve2d(self.field, kernel, mode='same', boundary='wrap')
+        neighboursCount = convolve2d(self.field_, kernel, mode='same', boundary='wrap')
         return neighboursCount
 
     def _setPixel(self, pos, state):
         x, y = pos
-        self.field[y, x] = state
+        self.field_[y, x] = state
 
     def _generateField(self, value):
-        w, h = self.size
+        w, h = self.size_
         field = np.full((h, w), value).astype(np.int8)
         return field
 
