@@ -22,7 +22,7 @@ class Display():
     def setField(self, field):
         self.field = field
 
-    def setColors(sekf, colors):
+    def setColors(self, colors):
         pass
         #TODO pass color as Lexika
 
