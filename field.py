@@ -43,24 +43,19 @@ class Field():
             logging.warning('Wrong input type in setField. The input could not be converted to a numpy-array. Try a two dimensional List')
 
     def placeFigure(self, figure, offset = (0,0)):
-        #TODO Fehlererkennung
-        h, w = np.array(figure).shape
+        ''' places a figure at the given offset
+        
+        figure -> anything that can be converted to a numpy array '''
+        #TODO Fehlererkennung wie in setField (in Methode auslagen)
+        hFig, wFig = np.array(figure).shape
         figure = np.array(figure)
         x1, y1 = offset
-        x2, y2 = x1+w, y1+h
 
-        #deal with offsets below 0:
-        if x1 < 0:
-            figure = figure[:, -x1:w]
-            x1 = 0
+        w, h = self.size
 
-        if y1 < 0:
-            figure = figure[-y1:h, :]
-            y1 = 0
-
-        #TODO deal with offsets above h/w
-
-        self.field[y1:y2, x1:x2] = figure
+        for x in range(wFig):
+            for y in range(hFig):
+                self.field[(y1+y)%h, (x1+x)%w] = figure[y, x]
 
     def getField(self):
         return self.field
