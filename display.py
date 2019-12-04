@@ -25,8 +25,7 @@ class Display():
         self.field = field
 
     def setColors(self, colors):
-        pass
-        #TODO pass color as Lexika
+        self.colors = colors
 
     def drawPixel(self, pos, color = (0,223,252)):
         x, y = pos
