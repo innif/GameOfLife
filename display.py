@@ -2,6 +2,7 @@ import pygame
 import sys
 import numpy as np
 import colorsets
+import logging
 
 class Display():
     def __init__(self, fieldSize, windowHeight = 400):
@@ -58,14 +59,15 @@ class Display():
         if self.loadedFigure is not None:
             pos = pygame.mouse.get_pos()
 
-            w, h = self.loadedFigureShape
-            drawX, drawY = int(pos[0]/self.blockSize- w/2), int(pos[1]/self.blockSize - h/2)
+            wFig, hFig = self.loadedFigureShape
+            drawX, drawY = int(pos[0]/self.blockSize- wFig/2), int(pos[1]/self.blockSize - hFig/2)
+            w, h = self.fieldSize
             
             for y, row in enumerate(self.loadedFigure):
                 for x, pixel in enumerate(row):
                     if(pixel == 1):
                         try:
-                            pixels[drawX+x, drawY+y, :] = self.colors.get('preview')
+                            pixels[(drawX+x)%w, (drawY+y)%h, :] = self.colors.get('preview')
                         except:
                             pass
 
