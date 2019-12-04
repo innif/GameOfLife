@@ -10,7 +10,7 @@ from field import Field
 from display import Display
 import figures
 
-size = 400, 300
+size = 50, 50
 
 f = Field(size=size, initValue=0)
 
@@ -19,9 +19,10 @@ f = Field(size=size, initValue=0)
 
 d = Display(f.getSize(), 800)
 d.setField(f)
+f.loadFromFile('field.f')
 
 while(True):
-    d.loadFigure(figures.pentadecathlon)
+    d.loadFigure(figures.gliderHorizontal)
     d.drawField(f)
     d.mainloop()
     f.update()
