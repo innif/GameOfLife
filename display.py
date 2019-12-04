@@ -45,16 +45,17 @@ class Display():
         if self.loadedFigure is not None:
             pos = pygame.mouse.get_pos()
 
-            w, h = self.loadedFigureShape
-            drawX, drawY = int(pos[0]/self.blockSize- w/2), int(pos[1]/self.blockSize - h/2)
+            wFig, hFig = self.loadedFigureShape
+            drawX, drawY = int(pos[0]/self.blockSize- wFig/2), int(pos[1]/self.blockSize - hFig/2)
+            w, h = self.fieldSize
             
             for y, row in enumerate(self.loadedFigure):
                 for x, pixel in enumerate(row):
                     if(pixel == 1):
                         try:
-                            pixels[drawX+x, drawY+y,0] = 0
-                            pixels[drawX+x, drawY+y,1] = 95
-                            pixels[drawX+x, drawY+y,2] = 107
+                            pixels[(drawX+x)%w, (drawY+y)%h,0] = 0
+                            pixels[(drawX+x)%w, (drawY+y)%h,1] = 95
+                            pixels[(drawX+x)%w, (drawY+y)%h,2] = 107
                         except:
                             pass
 
