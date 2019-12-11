@@ -46,13 +46,20 @@ class Field():
         if figure is None:
             logging.warning('placeFigure() failed')
             return
-        hFig, wFig = figure.shape[:2] 
-        x1, y1 = offset
-        w, h = self.size_
+        
+        self._placeNumpyArray(figure, offset)
 
-        for x in range(wFig):
-            for y in range(hFig):
-                self.field_[(y1+y)%h, (x1+x)%w] = figure[y, x]
+    def placeTemplate(self, template, offset = (0,0)):
+        ''' places an object of the template class at the given offset
+        
+        figure -> anything that can be converted to a numpy array '''
+        pointlist = template.get_pointlist()
+        xOff, yOff = offset
+        w, h = self.size_
+        for p in pointlist:
+            x, y = p
+            place = (y+yOff)%h, (x+xOff)%w
+            self.field_[place] = 1
 
     def getField(self):
         return self.field_
@@ -91,6 +98,15 @@ class Field():
                 pos = x, y
                 print('#' if self.getPixel(pos)>0 else ' ', end='')
             print('')
+
+    def _placeNumpyArray(self, array, offset):
+        hFig, wFig = array.shape[:2] 
+        x1, y1 = offset
+        w, h = self.size_
+
+        for x in range(wFig):
+            for y in range(hFig):
+                self.field_[(y1+y)%h, (x1+x)%w] += array[y, x]
             
     def _neighboursMatrix(self):
         kernel = np.array(
@@ -119,7 +135,7 @@ class Field():
             logging.warning('failed converting listInput to numpy array')
             return None
         
-        if len(newField.shape) is not 2: # reads number of dimensions of numpy array
+        if newField.ndim is not 2: # reads number of dimensions of numpy array
             logging.warning('listInput dimension has wrong shape. It should be a two dimensional List.')
             return None
 
