@@ -8,28 +8,28 @@ import time
 
 from field import Field
 from display import Display
+from template import Template
 import figures
 import pygame
+import colorsets
+import logging
 
-size = 50, 30
+size = 100, 100
 
 f = Field(size=size, initValue=0)
 c = pygame.time.Clock()
 
-for x in range(0, 20):
-    for y in range(0, 20):
-        #f.placeFigure(figures.gliderDiagonalNE, (x*5, y*5))
-        pass
-#f.fillRandom(seed=0)
-#f.setField('Hallo')
-#f.loadFromFile('field.f')
+t = Template('GLIDER', figures.gliderDiagonalNE)
+f.placeTemplate(t, (5, 5))
+# f.fillRandom(seed=0)
 
-d = Display(f.getSize(), 1000)
+d = Display(f.getSize(), 500)
 d.setField(f)
+d.setColors(colorsets.blue)
 #f.loadFromFile('field.f')
 
 while(True):
-    d.loadFigure(figures.gliderHorizontal)
+    d.loadFigure(figures.pentadecathlon)
     d.drawField(f)
     d.mainloop()
     f.update()
