@@ -23,13 +23,13 @@ t = Template('GLIDER', figures.gliderDiagonalNE)
 f.placeTemplate(t, (5, 5))
 # f.fillRandom(seed=0)
 
-d = Display(f.getSize(), 500)
+d = Display(f.getSize(), 1000)
 d.setField(f)
-d.setColors(colorsets.blue)
+d.setColors(colorsets.lightGray)
 #f.loadFromFile('field.f')
 
 while(True):
-    d.loadFigure(figures.pentadecathlon)
+    d.loadTemplate(t)
     d.drawField(f)
     d.mainloop()
     f.update()
