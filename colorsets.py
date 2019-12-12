@@ -1,4 +1,5 @@
 blue = {
+            'main-background': (0,95,107),
             'background': (52,56,56),
             'pixel': (0,223,252),
             'grid': (0,95,107),

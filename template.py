@@ -11,7 +11,7 @@ class Template():
             self.set_field(data)
 
     def __str__(self):
-        return str(self.get_field())
+        return str(self.get_pointlist())
     
     def get_field(self):
         out = np.zeros(self.shape)

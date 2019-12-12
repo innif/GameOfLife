@@ -1,5 +1,4 @@
 #TODO figure selection
-#TODO Performance
 #TODO define alowed placing Areas
 #TODO coding style
 #TODO add docstrings
@@ -21,11 +20,11 @@ c = pygame.time.Clock()
 
 t = Template('GLIDER', figures.gliderDiagonalNE)
 f.placeTemplate(t, (5, 5))
-# f.fillRandom(seed=0)
+f.fillRandom(seed=0)
 
-d = Display(f.getSize(), 1000)
+d = Display(f.getSize(), (1200,900), 900)
 d.setField(f)
-d.setColors(colorsets.lightGray)
+d.setColors(colorsets.blue)
 #f.loadFromFile('field.f')
 
 while(True):

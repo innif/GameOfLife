@@ -4,19 +4,25 @@ import numpy as np
 import colorsets
 import logging
 
+from screen import Screen
+
 class Display():
-    def __init__(self, fieldSize, windowHeight = 400):
+    def __init__(self, fieldSize, screenSize = (400, 400), mainFieldHeight = 380):
         pygame.init()
-        self.fieldSize = w, h = fieldSize 
-        self.blockSize = windowHeight/h
-        self.windowHeight = windowHeight
-        self.blockSizePixel = round(self.blockSize)
-        self.screenSize = int(self.blockSize*w), int(self.blockSize*h)
-        self.screen = pygame.display.set_mode(self.screenSize)
+        self.screen = pygame.display.set_mode(screenSize)
         pygame.display.set_caption("Conway's Game of Life")
+        self.mainField = Screen(fieldSize)
+
+        self.fieldSize = fW, fH = fieldSize
+        self.screenSize = w, h =  screenSize
+
+        self.field = None
         self.loadedTemplate = None
-        self.field = None # must be set for placing Figures
-        self.colors = colorsets.blue
+
+        mainScreenSize = mW, mH = int(mainFieldHeight*fW/fH), mainFieldHeight
+        margin = int((h-mH)/2)
+
+        self.mainScreenRect = (w-mW-margin, margin, mW, mH)
 
     def loadTemplate(self, template):
         self.loadedTemplate = template
@@ -26,56 +32,23 @@ class Display():
 
     def setColors(self, colors):
         self.colors = colors
-
-    def drawPixel(self, pos, color = (0,223,252)):
-        x, y = pos
-        xPixel, yPixel = int(x*self.blockSize), int(y*self.blockSize)
-        pygame.draw.rect(self.screen, color, (xPixel, yPixel, self.blockSizePixel, self.blockSizePixel))
-
-    def drawGrid(self, color):
-        blockSizeX = self.screenSize[0]/self.fieldSize[0]
-        blockSizeY = self.screenSize[1]/self.fieldSize[1]
-
-        if blockSizeX < 10 or blockSizeY < 10:
-            return
-
-        for x in range(1,self.fieldSize[0]):
-            pygame.draw.line(self.screen, color, (x*blockSizeX, 0), (x*blockSizeX, self.screenSize[1]))
-        
-        for y in range(1,self.fieldSize[1]):
-            pygame.draw.line(self.screen, color, (0, y*blockSizeY), (self.screenSize[0], y*blockSizeY))
+        self.mainField.setColors(colors) #TODO
 
     def drawField(self, field):
-        self.screen.fill(self.colors.get('background'))
-        field = field.getArray()
-        field = np.swapaxes(field,0,1)
+        self.screen.fill(self.colors.get('main-background'))
 
-        pixels = np.full((field.shape[0], field.shape[1], 3), 0)
-        pixels[:,:,0] = np.where(field, self.colors.get('pixel')[0], self.colors.get('background')[0])
-        pixels[:,:,1] = np.where(field, self.colors.get('pixel')[1], self.colors.get('background')[1])
-        pixels[:,:,2] = np.where(field, self.colors.get('pixel')[2], self.colors.get('background')[2])
+        self.mainField.drawField(field)
 
-        if self.loadedTemplate is not None:
-            pos = pygame.mouse.get_pos()
+        mPos = self.getMousePixelPos()
+        if(mPos is not None and self.loadedTemplate is not None):
+            self.mainField.previewTemplate(self.getMousePixelPos(), self.loadedTemplate)
 
-            pointlist = self.loadedTemplate.get_pointlist()
-            hFig, wFig = self.loadedTemplate.shape
+        pos, size = self.mainScreenRect[0:2], self.mainScreenRect[2:4]
 
-            drawX, drawY = int(pos[0]/self.blockSize- wFig/2), int(pos[1]/self.blockSize - hFig/2)
-            w, h = self.fieldSize
+        surf = self.mainField.getScreen()
+        surf = pygame.transform.scale(surf, size)
 
-            for p in pointlist:
-                x, y = p
-                pixels[(drawX+x)%w, (drawY+y)%h, :] = self.colors.get('preview')
-
-        s = pygame.pixelcopy.make_surface(pixels)
-        s = pygame.transform.scale(s, self.screenSize)
-
-        self.screen.blit(s, (0,0))
-
-        if self.colors.get('gridVisible'):
-            self.drawGrid(self.colors.get('grid'))
-
+        self.screen.blit(surf, pos)
         
     def mainloop(self):
         for event in pygame.event.get():
@@ -85,10 +58,25 @@ class Display():
             # handle MOUSEBUTTONUP
             if event.type == pygame.MOUSEBUTTONDOWN:#pygame.MOUSEBUTTONUP:
                 if self.loadedTemplate is not None and self.field is not None:
-                    pos = pygame.mouse.get_pos()
-                    w, h = self.loadedTemplate.shape
-                    drawPos = round(pos[0]/self.blockSize - w/2), round(pos[1]/self.blockSize - h/2)
-                    self.field.placeTemplate(self.loadedTemplate, drawPos)
+                    pos = self.getMousePixelPos()
+                    if pos is None:
+                        return
+                    self.field.placeTemplate(self.loadedTemplate, pos)
                     self.loadedTemplate = None
 
         pygame.display.update()
+
+    def getMousePixelPos(self):
+        xScreen, yScreen = self.mainScreenRect[0:2]
+        wScreen, hScreen = self.mainScreenRect[2:4]
+        w, h = self.fieldSize
+
+        x, y = pygame.mouse.get_pos()
+        x, y = x-xScreen, y-yScreen
+        x, y = x/wScreen, y/hScreen
+        x, y = x*w, y*h
+
+        if x < 0 or y < 0 or x >= w or y >= h:
+            return None 
+
+        return int(x), int(y)
