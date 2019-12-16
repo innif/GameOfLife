@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 import json
 import logging
 import time
@@ -52,37 +54,53 @@ class GameHandler(asyncore.dispatcher_with_send):
         
 
     def handle_read(self):
+        """
+        handles calculate acknowledgements and template request messages.
+        expects to be the messages a dictonary in json format.
+        every message MUST have the type field set.
+        template requests must also include a template requests field which conatains a list of points which shall be activated.
+        """
 
         try:
-            data = self.recv(8192).decode()
+            recv_data = self.recv(8192).decode()
         except BlockingIOError:
             return
 
+        data = json.loads(recv_data)
 
-        if data[-1] == '\n':
-            data = data[:-1]
-            logging.info('Recieved data {} by \"{}\" in turn {}'.format(data, self.name, TURN))
-            logging.info('Truncated \\n')
-        else :
-            logging.info('Recieved data {} by \"{}\" in turn {}'.format(data, self.name, TURN))
+        logging.info('Recieved data {} by \"{}\" in turn {}'.format(data, self.name, TURN))
 
-        if data == 'c:ack':
+
+        if type(data) != dict:
+            logging.error('Wrong data format!')
+            return
+        
+        if data['type'] == 'calculate ack':
             self.calc_ack = True
             logging.info('{} has finished xir\'s calculation in turn {}'.format(self.name, TURN))
 
-        if data[:2] == 't:':
+        if data['type'] == 'template request:':
             logging.info('{} requests {}'.format(self.name, data[2:]))
-            self.template_request += json.loads(data[2:])
+            self.template_request += data['request']
 
     def order_calc(self, templates):
-        changes = 'c:' + json.dumps(templates)
-        logging.info('order {} to calculate {} the following templates were abstracted'.format(self.name, templates, changes))
-        self.send(changes.encode('ascii'))
+
+        logging.info('order {} to calculate {} the following templates were abstracted'.format(self.name, templates))
+
+        message = {
+            'type' : 'calculate order',
+            'changes' : templates 
+        }
+        self.send(json.dumps(message).encode('ascii'))
     
     def order_draw(self):
         logging.info('order {} to draw'.format(self.name))
-        order = 'd'
-        self.send(order.encode('ascii'))
+
+        message = {
+            'type' : 'order draw'
+        }
+        self.send(json.dumps(message).encode('ascii'))
+        
         self.calc_ack = False
 
 class SocketServer(asyncore.dispatcher):
