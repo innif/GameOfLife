@@ -1,13 +1,18 @@
 import pygame
 import sys
 import numpy as np
-import colorsets
 import logging
 
+import colorsets
+import figures
+
+from selectionfield import SelectionField
 from screen import Screen
+from template import Template
 
 class Display():
     def __init__(self, fieldSize, screenSize = (400, 400), mainFieldHeight = 380):
+        #TODO NUR height übergeben
         pygame.init()
         self.screen = pygame.display.set_mode(screenSize)
         pygame.display.set_caption("Conway's Game of Life")
@@ -23,6 +28,13 @@ class Display():
         margin = int((h-mH)/2)
 
         self.mainScreenRect = (w-mW-margin, margin, mW, mH)
+        
+        self.selectionField = SelectionField((100, mainFieldHeight))
+        self.selectionFieldRect = (margin, margin, *self.selectionField.size)
+
+        self.selectionField.add_template(Template('Test', figures.pentadecathlon))
+        self.selectionField.add_template(Template('Test', figures.gliderDiagonalSE))
+        self.selectionField.add_template(Template('Test', figures.stick))
 
     def loadTemplate(self, template):
         self.loadedTemplate = template
@@ -38,6 +50,7 @@ class Display():
         self.screen.fill(self.colors.get('main-background'))
 
         self.mainField.drawField(field)
+        self.selectionField.update_surface(self.colors.get('main-background'))
 
         mPos = self.getMousePixelPos()
         if(mPos is not None and self.loadedTemplate is not None):
@@ -46,6 +59,13 @@ class Display():
         pos, size = self.mainScreenRect[0:2], self.mainScreenRect[2:4]
 
         surf = self.mainField.getScreen()
+        surf = pygame.transform.scale(surf, size)
+
+        self.screen.blit(surf, pos)
+
+        pos, size = self.selectionFieldRect[0:2], self.selectionFieldRect[2:4]
+
+        surf = self.selectionField.surface
         surf = pygame.transform.scale(surf, size)
 
         self.screen.blit(surf, pos)

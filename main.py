@@ -2,6 +2,7 @@
 #TODO define alowed placing Areas
 #TODO coding style
 #TODO add docstrings
+#TODO TemplateView
 
 import time
 
@@ -22,7 +23,7 @@ t = Template('GLIDER', figures.gliderDiagonalNE)
 f.placeTemplate(t, (5, 5))
 f.fillRandom(seed=0)
 
-d = Display(f.getSize(), (1200,900), 900)
+d = Display(f.getSize(), (1200,900), 800)
 d.setField(f)
 d.setColors(colorsets.blue)
 #f.loadFromFile('field.f')
