@@ -8,14 +8,26 @@ import asyncore
 
 TURN = 0
 
-class Server(threading.Thread):
+class Lobby(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
         self.registered_player = 0
         self.player_a_handler = None
         self.player_b_handler = None
+        self.is_full = False
 
+    def add_player(self, player):
+        if self.player_a_handler is None:
+            self.player_a_handler = player
+            return True
+        
+        if self.player_b_handler is None:
+            self.player_b_handler = player
+            self.is_full = True 
+            return True
+
+        return False
 
     def run(self):
         global TURN
@@ -39,38 +51,23 @@ class Server(threading.Thread):
             TURN += 1
             
 
-class GameHandler(asyncore.dispatcher_with_send):
+class PlayerHandler(asyncore.dispatcher_with_send):
 
-    def __init__(self, sock, name):
+    def __init__(self, sock, name, dispatcher):
         super().__init__(sock)
+        self.intern_name = name
+        self.username = None
+        self.has_lobby = False
+        self.is_in_game = False
+
+        self.dispatcher = dispatcher
+        self.delimiter = '\n\n'
+
         self.calc_ack = False
         self.template_request = []
-        self.name = name
-        self.delimiter = '\n\n'
-    
 
-    def handle_read(self):
-        """
-        handles calculate acknowledgements and template request messages.
-        expects to be the messages a dictonary in json format.
-        every message MUST have the type field set.
-        template requests must also include a template requests field which conatains a list of points which shall be activated.
-        """
-
-        try:
-            recv_data = self.recv(4096).decode()
-            
-            if recv_data == '':
-                return
-
-            while recv_data[-2:] != self.delimiter:
-                print(recv_data.split('\n'))
-                recv_data += self.recv(4096).decode()
-        except BlockingIOError:
-            return
-
-        # Make sure it end for an delimiter
-        commands = recv_data.split(self.delimiter)
+    def split_packets(self, data):
+        commands = data.split(self.delimiter)
 
         queue = []
         for command in commands:
@@ -84,64 +81,203 @@ class GameHandler(asyncore.dispatcher_with_send):
                 print(command)
                 print(er)
 
-        for packet in queue:
+        return queue
+
+    def handle_read(self):
+        """
+        handles calculate acknowledgements and template request messages.
+        expects to be the messages a dictonary in json format.
+        every message MUST have the type field set.
+        template requests must also include a template requests field which conatains a list of points which shall be activated.
+        """
+
+        try:
+            data = self.recv(4096).decode()
             
-            logging.info('Recieved data {} by \"{}\" in turn {}'.format(packet, self.name, TURN))
-
-            if type(packet) != dict:
-                logging.error('Wrong data format!')
+            if data == '':
                 return
+
+            while data[-2:] != self.delimiter:
+                print(data.split('\n'))
+                data += self.recv(4096).decode()
+                
+        except BlockingIOError:            
+            return
+
+        queue = self.split_packets(data)
+
+        for packet in queue:
+            self.handle_packet(packet)
+
+    def handle_packet(self, packet):
+        logging.info('Recieved data {} by \"{}\" in turn {}'.format(packet, self.intern_name, TURN))
+
+        # check if the json contains a dict
+        if type(packet) != dict:
+            logging.error('Wrong data format!')
+            return
         
-            if packet['type'] == 'calculate ack':
+        #
+        # handle the user registration
+        # if username is set and the player has a lobby self.is_in_game will be set to true
+        #
+
+        if not self.is_in_game:
+
+            #
+            # Set username when username isn't already taken
+            # when username is already taken inform the user about it
+            #
+
+            if packet.get('type', None) == 'set username':
+                
+                wanted_user_name = packet.get('username', None)
+                if wanted_user_name == None:
+                    logging.error('empty user name!')
+                    return
+                
+                if self.dispatcher.request_user_name(wanted_user_name) == 'Accepted':
+                    self.username = wanted_user_name
+                    self.inform_username_accepted()
+                else:
+                    self.inform_username_already_taken()
+
+            #
+            # join a lobby by a lobby_name
+            # if the lobby already exists and is not full yet then join it
+            # if the lobby doesn't exist the dispatcher will create the lobby and make the player join
+            # if the lobby exists but is already full the user will be informed
+            #
+
+            if packet.get('type', None) == 'join lobby':
+               
+                lobby_name =  packet.get('lobbyname', None)
+                if lobby_name == None:
+                    logging.error('empty lobby name!')
+                    return
+                
+                result = self.dispatcher.join_lobby(lobby_name, self)
+
+                if result == 'created lobby' or result == 'joined lobby':
+                    self.inform_lobby_accepted()
+                    self.has_lobby = True
+
+                elif result == 'lobby already full':
+                    self.inform_lobby_already_full()
+
+
+            self.is_in_game = self.username is not None and self.has_lobby
+
+        #
+        # handle the game interaction
+        #
+
+        else:
+
+            #
+            # player acknowledges a calculate process
+            # set self.calc_ack to true
+            #
+
+            if packet.get('type', None) == 'calculate ack':
+                logging.info('{} has finished xir\'s calculation in turn {}'.format(self.intern_name, TURN))
                 self.calc_ack = True
-                logging.info('{} has finished xir\'s calculation in turn {}'.format(self.name, TURN))
 
-            if packet['type'] == 'template request':
-                self.template_request += [packet['request']]
-                logging.info('{} requests {}'.format(self.name, packet['request']))
-        
+            #
+            # player request for setting a template
+            # add the template request to the request list
+            #
 
-    def send_message(self, message_type, **kwargs):
-        kwargs['type'] = message_type
-        message = json.dumps(kwargs).encode('ascii')
-        self.send(message)
-        self.send(self.delimiter.encode('ascii'))
+            if packet.get('type', None) == 'template request':
+                request = packet.get('request', None)
+                
+                if request == None:
+                    logging.error('recieved empty template request by {} in turn {}'.format(self.intern_name, TURN))
+                    return
 
+                self.template_request.append(request)
+                logging.info('{} requests {}'.format(self.intern_name, request))
+  
     def order_calc(self, templates):
-        logging.info('order {} to calculate {} the following templates were abstracted'.format(self.name, templates))
+        logging.info('order {} to calculate {} the following templates were abstracted'.format(self.intern_name, templates))
         self.send_message('calculate order', changes = templates)
         self.template_request = []
     
     def order_draw(self):
-        logging.info('order {} to draw'.format(self.name))
+        logging.info('order {} to draw'.format(self.intern_name))
         self.send_message('draw')
         self.calc_ack = False
+
+
+        logging.info('order {} to draw'.format(self.intern_name))
+        self.send_message('draw')
+        self.calc_ack = False
+
+    def inform_username_accepted(self):
+        logging.info('username accepted {}'.format(self.intern_name))
+        self.send_message('username', status = 'accepted')
+
+    def inform_username_already_taken(self):
+        logging.info('username already taken {}'.format(self.intern_name))
+        self.send_message('username', status = 'already taken')
+
+    def inform_lobby_accepted(self):
+        logging.info('lobby accepted {}'.format(self.intern_name))
+        self.send_message('lobby', status = 'accepted')
+
+    def inform_lobby_already_full(self):
+        logging.info('lobby already full {}'.format(self.intern_name))
+        self.send_message('lobby', status = 'already full')
+
+    def send_message(self, message_type, **kwargs):
+            kwargs['type'] = message_type
+            message = json.dumps(kwargs)
+            message += self.delimiter
+            self.send(message.encode('ascii'))
 
     def send_delimiter(self):
         self.send(b'\n\n')
 
-class SocketServer(asyncore.dispatcher):
+class SocketDispatcher(asyncore.dispatcher):
 
-    def __init__(self, host, port, gameserver):
+    def __init__(self, host, port):
         asyncore.dispatcher.__init__(self)
         self.create_socket()
         self.set_reuse_addr()
         self.bind((host, port))
         self.listen(5)
-        self.gameserver = gameserver
+
+        self.lobbys = {}
+        self.players = []
+        self.usernames = []
 
     def handle_accepted(self, sock, addr):
+        player = PlayerHandler(sock, 'Player{}'.format(len(self.players)), self)
+        self.players.append(player)
 
-        if self.gameserver.registered_player == 1:
-            self.gameserver.player_b_handler = GameHandler(sock, 'PlayerB')
-            print('accepted player b')
-            self.gameserver.registered_player +=1
-            self.gameserver.run()
-            
-        if self.gameserver.registered_player == 0:
-            self.gameserver.player_a_handler = GameHandler(sock, 'PlayerA')
-            print('accepted player a')
-            self.gameserver.registered_player +=1
+    def request_user_name(self, username):
+        if username in self.usernames:
+            return 'Denied'
+        else:
+            self.usernames.append(username)
+            return 'Accepted'
+
+    def join_lobby(self, lobby_name, player):
+        lobby = self.lobbys.get(lobby_name, None)
+
+        if lobby == None:
+            self.lobbys[lobby_name] = Lobby()
+            self.lobbys[lobby_name].add_player(player)
+            return 'created lobby'
+        
+        if lobby.add_player(player):
+            if lobby.is_full:
+                print('start lobby')
+                lobby.start()
+                print('lobby started')
+            return 'joined lobby'
+        
+        return 'lobby already full'
 
 
 
@@ -153,8 +289,5 @@ if __name__ == '__main__':
     logging.info('Started server at {}'.format(start_time))
     logging.info('==='*30)
 
-    gameserver = Server()
-    socketserver = SocketServer('localhost', 1111, gameserver)
+    socketserver = SocketDispatcher('localhost', 1111)
     asyncore.loop()
-
-
