@@ -145,9 +145,16 @@ class SocketServer(asyncore.dispatcher):
 
 
 
-logging.basicConfig(filename='server.log', filemode='w', level=logging.INFO)
-gameserver = Server()
-socketserver = SocketServer('localhost', 1111, gameserver)
-asyncore.loop()
+if __name__ == '__main__':
+    logging.basicConfig(filename='logging/server/server.log', filemode='a', level=logging.INFO)
+    
+    start_time = time.strftime('%d %b %Y %H:%M:%S', time.gmtime())
+    logging.info('==='*30)
+    logging.info('Started server at {}'.format(start_time))
+    logging.info('==='*30)
+
+    gameserver = Server()
+    socketserver = SocketServer('localhost', 1111, gameserver)
+    asyncore.loop()
 
 

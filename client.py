@@ -2,13 +2,16 @@
 
 import socket
 import json
+import logging
+import argparse
+
 from field import Field
 from display import Display
 from template import Template
+
 import figures
 import pygame
 import colorsets
-import logging
 
 
 class Client:
@@ -84,30 +87,36 @@ class Client:
                 self.poll_server_packets()
 
 
-c = Client()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Start the game of life with a given server and a given port')
+    parser.add_argument('domain', metavar='d', type = str,  help='the domain of the server')
+    parser.add_argument('port', metavar='p', type = int,  help='the port where the server hosts the socket')
+    args = parser.parse_args()
 
-size = 100, 100
+    c = Client(args.domain, args.port)
 
-f = Field(size=size, initValue=0)
+    size = 100, 100
 
-t = Template('GLIDER', figures.gliderDiagonalNE)
-f.placeTemplate(t, (5, 5))
-# f.fillRandom(seed=0)
+    f = Field(size=size, initValue=0)
 
-d = Display(f.getSize(), 1000)
-d.setField(f)
-d.setColors(colorsets.lightGray)
-#f.loadFromFile('field.f')
-d.loadTemplate(t)
+    t = Template('GLIDER', figures.gliderDiagonalNE)
+    f.placeTemplate(t, (5, 5))
+    # f.fillRandom(seed=0)
+
+    d = Display(f.getSize(), 1000)
+    d.setField(f)
+    d.setColors(colorsets.lightGray)
+    #f.loadFromFile('field.f')
+    d.loadTemplate(t)
 
 
-while(True):
-    d.drawField(f)
-    for templ, position in d.mainloop():
-        c.send_template_request(templ, position)
-    changes = c.wait_calc_order()
-    for change in changes:
-        f.placePointlist(change[0], change[1])
-    c.send_calc_ack()
-    c.wait_draw_order()
-    f.update()
+    while(True):
+        d.drawField(f)
+        for templ, position in d.mainloop():
+            c.send_template_request(templ, position)
+        changes = c.wait_calc_order()
+        for change in changes:
+            f.placePointlist(change[0], change[1])
+        c.send_calc_ack()
+        c.wait_draw_order()
+        f.update()
