@@ -40,6 +40,9 @@ class NetworkClient:
     def request_username(self, username):
         self.send_message('set username', username = username)
 
+    def request_lobbylist(self):
+        self.send_message('list lobbys')
+
     def join_lobby(self, lobbyname):
         self.send_message('join lobby', lobbyname = lobbyname)
 
@@ -91,6 +94,16 @@ class NetworkClient:
             else:
                 self.poll_server_packets()
 
+    def wait_list_lobbys(self):
+        while True:
+            if self.queue != []:
+                lobby_answer = self.queue.pop(0)
+                if lobby_answer.get('type', None) == 'lobbylist':
+                    return lobby_answer.get('lobbylist', None)
+            else:
+                self.poll_server_packets()
+
+
     def poll_server_packets(self):
         '''
         polls server packets and adds them into the queue after they were converted from json objects
@@ -119,6 +132,7 @@ class NetworkClient:
                 obj = json.loads(command)
                 queue.append(obj)
             except json.decoder.JSONDecodeError as er:
+                print('JSON decoder error:')
                 print(command)
                 print(er)
 
@@ -141,6 +155,20 @@ if __name__ == "__main__":
         if not username_set:
             print('Username already taken!')
 
+    c.request_lobbylist()
+    lobbys = c.wait_list_lobbys()
+
+    print('Lobbys:')
+    print(lobbys)
+    if not lobbys:
+        print('== No lobbys exist yet ==') 
+    print('*'*30)
+    for lobby in lobbys:
+        print('name:     {}'.format(lobby.get('lobbyname', None)))
+        print('joinable: {}'.format(lobby.get('joinable', None)))
+        print('running:  {}'.format(lobby.get('running', None)))
+        print('*'*30)
+    
     lobby_joined = False
     while not lobby_joined:
         lobby = input('Set lobby: ')

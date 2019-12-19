@@ -6,8 +6,6 @@ import time
 import threading
 import asyncore
 
-TURN = 0
-
 class Lobby(threading.Thread):
 
     def __init__(self):
@@ -16,6 +14,8 @@ class Lobby(threading.Thread):
         self.player_a_handler = None
         self.player_b_handler = None
         self.is_full = False
+        self.is_running = False
+        self.turn = 0
 
     def add_player(self, player):
         if self.player_a_handler is None:
@@ -30,7 +30,7 @@ class Lobby(threading.Thread):
         return False
 
     def run(self):
-        global TURN
+        self.is_running = True
         finished = False
         templates = []
         while not finished:
@@ -48,7 +48,7 @@ class Lobby(threading.Thread):
             self.player_b_handler.order_draw()
 
             templates = self.player_b_handler.template_request + self.player_a_handler.template_request
-            TURN += 1
+            self.turn += 1
             
 
 class PlayerHandler(asyncore.dispatcher_with_send):
@@ -59,6 +59,7 @@ class PlayerHandler(asyncore.dispatcher_with_send):
         self.username = None
         self.has_lobby = False
         self.is_in_game = False
+        self.lobby = None
 
         self.dispatcher = dispatcher
         self.delimiter = '\n\n'
@@ -91,6 +92,10 @@ class PlayerHandler(asyncore.dispatcher_with_send):
         template requests must also include a template requests field which conatains a list of points which shall be activated.
         """
 
+        #
+        # recieve data until there is one packet finished
+        # if there was no data recieved just skip so there are indexing errors
+        #
         try:
             data = self.recv(4096).decode()
             
@@ -110,7 +115,11 @@ class PlayerHandler(asyncore.dispatcher_with_send):
             self.handle_packet(packet)
 
     def handle_packet(self, packet):
-        logging.info('Recieved data {} by \"{}\" in turn {}'.format(packet, self.intern_name, TURN))
+        if self.is_in_game:
+            logging.info('Recieved data {} by \"{}\" in turn {}'.format(packet, self.intern_name, self.lobby.turn))
+        else:
+            logging.info('Recieved data {} by \"{}\"'.format(packet, self.intern_name))
+
 
         # check if the json contains a dict
         if type(packet) != dict:
@@ -121,14 +130,12 @@ class PlayerHandler(asyncore.dispatcher_with_send):
         # handle the user registration
         # if username is set and the player has a lobby self.is_in_game will be set to true
         #
-
         if not self.is_in_game:
 
             #
             # Set username when username isn't already taken
             # when username is already taken inform the user about it
             #
-
             if packet.get('type', None) == 'set username':
                 
                 wanted_user_name = packet.get('username', None)
@@ -148,7 +155,6 @@ class PlayerHandler(asyncore.dispatcher_with_send):
             # if the lobby doesn't exist the dispatcher will create the lobby and make the player join
             # if the lobby exists but is already full the user will be informed
             #
-
             if packet.get('type', None) == 'join lobby':
                
                 lobby_name =  packet.get('lobbyname', None)
@@ -156,43 +162,47 @@ class PlayerHandler(asyncore.dispatcher_with_send):
                     logging.error('empty lobby name!')
                     return
                 
-                result = self.dispatcher.join_lobby(lobby_name, self)
+                lobby = self.dispatcher.join_lobby(lobby_name, self)
 
-                if result == 'created lobby' or result == 'joined lobby':
-                    self.inform_lobby_accepted()
-                    self.has_lobby = True
-
-                elif result == 'lobby already full':
+                if lobby is None:
                     self.inform_lobby_already_full()
+                else:
+                    self.inform_lobby_accepted()
+                    self.lobby = lobby
+
+            if packet.get('type', None) == 'list lobbys':
+
+                lobbys = self.dispatcher.list_lobbys()
+                self.inform_list_lobbys(lobbys)
 
 
-            self.is_in_game = self.username is not None and self.has_lobby
+            if self.lobby is not None:
+                self.username = self.intern_name
+            
+            self.is_in_game = self.username is not None and self.lobby is not None
 
         #
         # handle the game interaction
         #
-
         else:
 
             #
             # player acknowledges a calculate process
             # set self.calc_ack to true
             #
-
             if packet.get('type', None) == 'calculate ack':
-                logging.info('{} has finished xir\'s calculation in turn {}'.format(self.intern_name, TURN))
+                logging.info('{} has finished xir\'s calculation in turn {}'.format(self.intern_name, self.lobby.turn))
                 self.calc_ack = True
 
             #
             # player request for setting a template
             # add the template request to the request list
             #
-
             if packet.get('type', None) == 'template request':
                 request = packet.get('request', None)
                 
                 if request == None:
-                    logging.error('recieved empty template request by {} in turn {}'.format(self.intern_name, TURN))
+                    logging.error('recieved empty template request by {} in turn {}'.format(self.intern_name, self.lobby.turn))
                     return
 
                 self.template_request.append(request)
@@ -204,11 +214,6 @@ class PlayerHandler(asyncore.dispatcher_with_send):
         self.template_request = []
     
     def order_draw(self):
-        logging.info('order {} to draw'.format(self.intern_name))
-        self.send_message('draw')
-        self.calc_ack = False
-
-
         logging.info('order {} to draw'.format(self.intern_name))
         self.send_message('draw')
         self.calc_ack = False
@@ -228,6 +233,10 @@ class PlayerHandler(asyncore.dispatcher_with_send):
     def inform_lobby_already_full(self):
         logging.info('lobby already full {}'.format(self.intern_name))
         self.send_message('lobby', status = 'already full')
+
+    def inform_list_lobbys(self, lobbylist):
+        logging.info('list lobbys {}'.format(self.intern_name))
+        self.send_message('lobbylist', lobbylist = lobbylist)
 
     def send_message(self, message_type, **kwargs):
             kwargs['type'] = message_type
@@ -268,17 +277,24 @@ class SocketDispatcher(asyncore.dispatcher):
         if lobby == None:
             self.lobbys[lobby_name] = Lobby()
             self.lobbys[lobby_name].add_player(player)
-            return 'created lobby'
+            return self.lobbys[lobby_name]
         
         if lobby.add_player(player):
             if lobby.is_full:
-                print('start lobby')
                 lobby.start()
-                print('lobby started')
-            return 'joined lobby'
+            return lobby
         
-        return 'lobby already full'
+        return None
 
+    def list_lobbys(self):
+        result = []
+        for key in self.lobbys.keys():
+            result += [{
+                'lobbyname': key,
+                'joinable': self.lobbys[key].is_full,
+                'running': self.lobbys[key].is_running
+                }]
+        return result
 
 
 if __name__ == '__main__':
