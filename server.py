@@ -39,16 +39,16 @@ class Lobby(threading.Thread):
             self.player_b_handler.order_calc(templates)
             while not (self.player_a_handler.calc_ack and self.player_b_handler.calc_ack):
 
-                self.player_a_handler.handle_read()
-                self.player_b_handler.handle_read()
-                
-                time.sleep(0.0001)
-            
-            
-            self.player_a_handler.order_draw()
-            self.player_b_handler.order_draw()
+                if not self.player_a_handler.calc_ack:
+                    self.player_a_handler.handle_read()
 
+                if not self.player_b_handler.calc_ack:
+                    self.player_b_handler.handle_read()            
+            
+            self.player_a_handler.calc_ack = False
+            self.player_b_handler.calc_ack = False
             templates = self.player_b_handler.template_request + self.player_a_handler.template_request
+
             self.turn += 1
             
 
@@ -190,34 +190,25 @@ class PlayerHandler(asyncore.dispatcher_with_send):
             #
             # player acknowledges a calculate process
             # set self.calc_ack to true
+            # add the template request to the request list
             #
             if packet.get('type', None) == 'calculate ack':
                 logging.info('{} has finished xir\'s calculation in turn {}'.format(self.intern_name, self.lobby.turn))
                 self.calc_ack = True
 
-            #
-            # player request for setting a template
-            # add the template request to the request list
-            #
-            if packet.get('type', None) == 'template request':
                 request = packet.get('request', None)
-                
+
                 if request == None:
                     logging.error('recieved empty template request by {} in turn {}'.format(self.intern_name, self.lobby.turn))
                     return
 
-                self.template_request.append(request)
+                self.template_request += request
                 logging.info('{} requests {}'.format(self.intern_name, request))
   
     def order_calc(self, templates):
         logging.info('order {} to calculate {} the following templates were abstracted'.format(self.intern_name, templates))
         self.send_message('calculate order', changes = templates)
         self.template_request = []
-    
-    def order_draw(self):
-        logging.info('order {} to draw'.format(self.intern_name))
-        self.send_message('draw')
-        self.calc_ack = False
 
     def inform_username_accepted(self):
         logging.info('username accepted {}'.format(self.intern_name))

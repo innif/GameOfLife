@@ -70,7 +70,7 @@ class Display():
 
         self.screen.blit(surf, pos)
         
-    def mainloop(self):
+    def handle_user_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()

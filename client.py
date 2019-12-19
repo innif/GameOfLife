@@ -34,8 +34,8 @@ class NetworkClient:
     def send_template_request(self, templ, position):
         self.send_message('template request', request = (templ._pointlist, position))
 
-    def send_calc_ack(self):
-        self.send_message('calculate ack')
+    def send_calc_ack(self, requests):
+        self.send_message('calculate ack', request=requests)
 
     def request_username(self, username):
         self.send_message('set username', username = username)
@@ -51,6 +51,7 @@ class NetworkClient:
         while changes is None:
             if self.queue != []:
                 order = self.queue.pop(0)
+                print(order)
                 if order['type'] == 'calculate order':
                     changes = order['changes']
             else:
@@ -182,7 +183,7 @@ def start():
     f = Field(size=size, initValue=0)
 
     t = Template('GLIDER', figures.gliderDiagonalNE)
-    f.placeTemplate(t, (5, 5))
+    #f.placeTemplate(t, (5, 5))
     # f.fillRandom(seed=0)
 
     d = Display(f.getSize(), (1200,900), 800)
@@ -194,15 +195,16 @@ def start():
 
     while(True):
         d.drawField(f)
-        for templ, position in d.mainloop():
-            c.send_template_request(templ, position)
         changes = c.wait_calc_order()
         for change in changes:
             f.placePointlist(change[0], change[1])
-        c.send_calc_ack()
-        c.wait_draw_order()
+
+        requested_changes = [[templ._pointlist, pos] for templ, pos in d.handle_user_events()]
+
+        c.send_calc_ack(requested_changes)
         f.update()
 
 if __name__ == "__main__":
-    import cProfile
-    cProfile.run('start()')
+    #import cProfile
+    #cProfile.run('start()')
+    start()
