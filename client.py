@@ -185,7 +185,7 @@ if __name__ == "__main__":
     f.placeTemplate(t, (5, 5))
     # f.fillRandom(seed=0)
 
-    d = Display(f.getSize(), 1000)
+    d = Display(f.getSize(), (1200,900), 800)
     d.setField(f)
     d.setColors(colorsets.lightGray)
     #f.loadFromFile('field.f')

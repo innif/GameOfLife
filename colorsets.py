@@ -32,6 +32,7 @@ fresh = {
         }
 
 lightGray = {
+            'main-background': (255,255,255),
             'background': (240,240,240),
             'pixel': (15,15,15),
             'grid': (255,255,255),

@@ -87,9 +87,7 @@ class Display():
             '''
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.loadedTemplate is not None and self.field is not None:
-                    pos = pygame.mouse.get_pos()
-                    w, h = self.loadedTemplate.shape
-                    template_position = round(pos[0]/self.blockSize - w/2), round(pos[1]/self.blockSize - h/2)
+                    template_position = self.getMousePixelPos()
                     yield self.loadedTemplate, template_position
 
 

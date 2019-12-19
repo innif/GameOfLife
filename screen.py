@@ -21,7 +21,7 @@ class Screen():
         if template is None:
             return
 
-        pointlist = template.get_pointlist()
+        pointlist = template._pointlist
 
         drawX, drawY = pos
         w, h = self.fieldSize
