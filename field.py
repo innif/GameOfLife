@@ -5,7 +5,7 @@ import logging
 
 class Field():
     def __init__(self, size = (0,0), initValue = 0):
-        self.size_ = w, h = size
+        self.size_ = size
         self.field_ = self._generateField(initValue)
 
     def getArray(self):

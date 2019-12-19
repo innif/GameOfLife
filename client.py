@@ -138,7 +138,7 @@ class NetworkClient:
 
         return queue
 
-if __name__ == "__main__":
+def start():
 
     parser = argparse.ArgumentParser(description='Start the game of life with a given server and a given port')
     parser.add_argument('domain', metavar='d', type = str,  help='the domain of the server')
@@ -202,3 +202,7 @@ if __name__ == "__main__":
         c.send_calc_ack()
         c.wait_draw_order()
         f.update()
+
+if __name__ == "__main__":
+    import cProfile
+    cProfile.run('start()')

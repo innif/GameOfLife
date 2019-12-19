@@ -6,6 +6,7 @@ import time
 import threading
 import asyncore
 
+
 class Lobby(threading.Thread):
 
     def __init__(self):
@@ -291,7 +292,7 @@ class SocketDispatcher(asyncore.dispatcher):
         for key in self.lobbys.keys():
             result += [{
                 'lobbyname': key,
-                'joinable': ! self.lobbys[key].is_full,
+                'joinable': not self.lobbys[key].is_full,
                 'running': self.lobbys[key].is_running
                 }]
         return result
