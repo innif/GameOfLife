@@ -53,13 +53,16 @@ class Field():
         ''' places an object of the template class at the given offset
         
         figure -> anything that can be converted to a numpy array '''
-        pointlist = template.get_pointlist()
+        self.placePointlist(template._pointlist, offset=offset)
+
+    def placePointlist(self, pointlist, offset=(0,0)):
         xOff, yOff = offset
         w, h = self.size_
         for p in pointlist:
             x, y = p
             place = (y+yOff)%h, (x+xOff)%w
             self.field_[place] = 1
+
 
     def getField(self):
         return self.field_
@@ -79,7 +82,7 @@ class Field():
     def loadFromFile(self, path):
         f = open(path, 'r')
         lines = f.readlines()
-        w = len(lines[0])-1 # länge des ersten Strings -1, da jede Zeile auf \n endet
+        w = len(lines[0])-1 # laenge des ersten Strings -1, da jede Zeile auf \n endet
 
         field = []
         for l in lines:

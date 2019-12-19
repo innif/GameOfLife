@@ -23,9 +23,6 @@ class Template():
             out[p] = 1
         return out
 
-    def get_pointlist(self):
-        return self._pointlist
-
     def set_field(self, data):
         ''' data - anything twodimensional that can be converted to a numpy array '''
         data = np.array(data)
@@ -38,8 +35,9 @@ class Template():
         
         px, py = np.where(data == 1)
 
-        l = zip(px, py)
+        l = zip(px.astype(int), py.astype(int))
         l = list(l)
+        l = [(i.item(), j.item()) for i,j in l]
 
         self._pointlist = l
         self._calc_surface()

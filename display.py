@@ -72,10 +72,11 @@ class Display():
         
     def mainloop(self):
         for event in pygame.event.get():
-            if event.type==pygame.QUIT:
+            if event.type == pygame.QUIT:
                 sys.exit()
                 ev = pygame.event.get()
             # handle MOUSEBUTTONUP
+            '''
             if event.type == pygame.MOUSEBUTTONDOWN:#pygame.MOUSEBUTTONUP:
                 if self.loadedTemplate is not None and self.field is not None:
                     pos = self.getMousePixelPos()
@@ -83,6 +84,15 @@ class Display():
                         return
                     self.field.placeTemplate(self.loadedTemplate, pos)
                     self.loadedTemplate = None
+            '''
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.loadedTemplate is not None and self.field is not None:
+                    pos = pygame.mouse.get_pos()
+                    w, h = self.loadedTemplate.shape
+                    template_position = round(pos[0]/self.blockSize - w/2), round(pos[1]/self.blockSize - h/2)
+                    yield self.loadedTemplate, template_position
+
+
 
         pygame.display.update()
 
