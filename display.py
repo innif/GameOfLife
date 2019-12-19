@@ -33,32 +33,32 @@ class Display():
         self.selectionFieldRect = (margin, margin, *self.selectionField.size)
 
         self.selectionField.add_template(Template('Test', figures.pentadecathlon))
-        self.selectionField.add_template(Template('Test', figures.gliderDiagonalSE))
+        self.selectionField.add_template(Template('Test', figures.glider_diagonal_se))
         self.selectionField.add_template(Template('Test', figures.stick))
 
-    def loadTemplate(self, template):
+    def load_template(self, template):
         self.loadedTemplate = template
 
-    def setField(self, field):
+    def set_field(self, field):
         self.field = field
 
-    def setColors(self, colors):
+    def set_colors(self, colors):
         self.colors = colors
-        self.mainField.setColors(colors) #TODO
+        self.mainField.set_colors(colors) #TODO
 
-    def drawField(self, field):
+    def draw_field(self, field):
         self.screen.fill(self.colors.get('main-background'))
 
-        self.mainField.drawField(field)
+        self.mainField.draw_field(field)
         self.selectionField.update_surface(self.colors.get('main-background'))
 
-        mPos = self.getMousePixelPos()
+        mPos = self.get_mouse_pixel_pos()
         if(mPos is not None and self.loadedTemplate is not None):
-            self.mainField.previewTemplate(self.getMousePixelPos(), self.loadedTemplate)
+            self.mainField.preview_template(self.get_mouse_pixel_pos(), self.loadedTemplate)
 
         pos, size = self.mainScreenRect[0:2], self.mainScreenRect[2:4]
 
-        surf = self.mainField.getScreen()
+        surf = self.mainField.get_screen()
         surf = pygame.transform.scale(surf, size)
 
         self.screen.blit(surf, pos)
@@ -79,22 +79,22 @@ class Display():
             '''
             if event.type == pygame.MOUSEBUTTONDOWN:#pygame.MOUSEBUTTONUP:
                 if self.loadedTemplate is not None and self.field is not None:
-                    pos = self.getMousePixelPos()
+                    pos = self.get_mouse_pixel_pos()
                     if pos is None:
                         return
-                    self.field.placeTemplate(self.loadedTemplate, pos)
+                    self.field.place_template(self.loadedTemplate, pos)
                     self.loadedTemplate = None
             '''
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.loadedTemplate is not None and self.field is not None:
-                    template_position = self.getMousePixelPos()
+                    template_position = self.get_mouse_pixel_pos()
                     yield self.loadedTemplate, template_position
 
 
 
         pygame.display.update()
 
-    def getMousePixelPos(self):
+    def get_mouse_pixel_pos(self):
         xScreen, yScreen = self.mainScreenRect[0:2]
         wScreen, hScreen = self.mainScreenRect[2:4]
         w, h = self.fieldSize

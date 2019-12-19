@@ -31,7 +31,7 @@ fresh = {
             'gridVisible': True
         }
 
-lightGray = {
+light_gray = {
             'main-background': (255,255,255),
             'background': (240,240,240),
             'pixel': (15,15,15),

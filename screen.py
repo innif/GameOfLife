@@ -4,20 +4,21 @@ import numpy as np
 import colorsets
 import logging
 
+
 class Screen():
     def __init__(self, fieldSize):
-        self.fieldSize = w, h = fieldSize 
+        self.fieldSize = w, h = fieldSize
         self.pixels = np.zeros(fieldSize)
         self.colors = colorsets.blue
 
-    def getScreen(self):
+    def get_screen(self):
         s = pygame.pixelcopy.make_surface(self.pixels)
         return s
 
-    def setColors(self, colors):
+    def set_colors(self, colors):
         self.colors = colors
 
-    def previewTemplate(self, pos, template):
+    def preview_template(self, pos, template):
         if template is None:
             return
 
@@ -28,18 +29,18 @@ class Screen():
 
         for p in pointlist:
             x, y = p
-            self.pixels[(drawX+x)%w, (drawY+y)%h, :] = self.colors.get('preview')
+            self.pixels[(drawX+x) % w, (drawY+y) %
+                        h, :] = self.colors.get('preview')
 
-
-    def drawField(self, field):
+    def draw_field(self, field):
         # background = np.ones((field.shape[0], field.shape[1], 3), 0)
         # background *= np.array(self.colors.get('background'))
 
         # foreground = np.ones((field.shape[0], field.shape[1], 3), 0)
         # foreground *= np.array(self.colors.get('pixel'))
 
-        field = field.getArray()
-        field = np.swapaxes(field,0,1)
+        field = field.field
+        field = np.swapaxes(field, 0, 1)
 
         bColor = np.array(self.colors.get('background'))
         fColor = np.array(self.colors.get('pixel'))

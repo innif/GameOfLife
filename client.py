@@ -8,6 +8,7 @@ import argparse
 from field import Field
 from display import Display
 from template import Template
+from cache import Cache
 
 import figures
 import pygame
@@ -15,7 +16,7 @@ import colorsets
 
 
 class NetworkClient:
-    def __init__(self, server_ip = 'localhost', port = 1111):
+    def __init__(self, cache, server_ip = 'localhost', port = 1111):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((server_ip, port))
         # delimiter
@@ -24,6 +25,7 @@ class NetworkClient:
         self.sock = sock
         # a queue that contains the json objs which where sent by the game server
         self.queue = []
+        self.cache = cache
 
     def send_message(self, message_type, **kwargs):
         kwargs['type'] = message_type
@@ -51,23 +53,13 @@ class NetworkClient:
         while changes is None:
             if self.queue != []:
                 order = self.queue.pop(0)
-                print(order)
                 if order['type'] == 'calculate order':
                     changes = order['changes']
             else:
                 self.poll_server_packets()
-            
-        return changes    
+                self.cache.calculate_one_tick()
 
-    def wait_draw_order(self):
-        draw_command_given = False
-        while not draw_command_given:
-            if self.queue != []:
-                order = self.queue.pop(0)
-                if order['type'] == 'draw':
-                    draw_command_given = True
-            else:
-                self.poll_server_packets()
+        return changes    
 
     def wait_username_accept(self):
         while True:
@@ -146,7 +138,23 @@ def start():
     parser.add_argument('port', metavar='p', type = int,  help='the port where the server hosts the socket')
     args = parser.parse_args()
 
-    c = NetworkClient(args.domain, args.port)
+    size = 100, 100
+
+    f = Field(size=size, initValue=0)
+
+    t = Template('GLIDER', figures.glider_diagonal_ne)
+    #f.place_template(t, (5, 5))
+    #fill_random(f, seed=0)
+
+    d = Display(f.size, (1200,900), 800)
+    d.set_field(f)
+    d.set_colors(colorsets.light_gray)
+    #f.load_from_file('field.f')
+    d.load_template(t)
+
+    cache = Cache(f)
+
+    c = NetworkClient(cache, args.domain, args.port)
 
     username_set = False
     while not username_set:
@@ -178,33 +186,23 @@ def start():
         if not lobby_joined:
             print('lobby already full!')
 
-    size = 100, 100
-
-    f = Field(size=size, initValue=0)
-
-    t = Template('GLIDER', figures.gliderDiagonalNE)
-    #f.placeTemplate(t, (5, 5))
-    # f.fillRandom(seed=0)
-
-    d = Display(f.getSize(), (1200,900), 800)
-    d.setField(f)
-    d.setColors(colorsets.lightGray)
-    #f.loadFromFile('field.f')
-    d.loadTemplate(t)
-
 
     while(True):
-        d.drawField(f)
+        d.draw_field(f)
         changes = c.wait_calc_order()
-        for change in changes:
-            f.placePointlist(change[0], change[1])
 
-        requested_changes = [[templ._pointlist, pos] for templ, pos in d.handle_user_events()]
+        for change in changes:
+            f.place_pointlist(change[0], change[1])
+
+        requested_changes = [[templ._pointlist, pos] for templ, pos in d.handle_user_events() if pos is not None]
 
         c.send_calc_ack(requested_changes)
-        f.update()
+
+        cache_is_dirty = changes != []
+        f = cache.get_next(dirty = cache_is_dirty)
+
 
 if __name__ == "__main__":
-    #import cProfile
-    #cProfile.run('start()')
-    start()
+    import cProfile
+    cProfile.run('start()')
+    #start()

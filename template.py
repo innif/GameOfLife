@@ -40,9 +40,9 @@ class Template():
         l = [(i.item(), j.item()) for i,j in l]
 
         self._pointlist = l
-        self._calc_surface()
+        self.calc_surface()
 
-    def _calc_surface(self):
+    def calc_surface(self):
         pixels = np.zeros((*self.shape, 3), np.uint8)
 
         bColor = np.array(self.colors.get('background'))

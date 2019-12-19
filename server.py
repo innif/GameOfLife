@@ -5,6 +5,7 @@ import logging
 import time
 import threading
 import asyncore
+import cProfile
 
 
 class Lobby(threading.Thread):

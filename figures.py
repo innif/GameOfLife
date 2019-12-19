@@ -1,28 +1,28 @@
-gliderDiagonalSE = [
+glider_diagonal_se = [
     [0,1,0],
     [0,0,1],
     [1,1,1],
 ]
 
-gliderDiagonalNE = [
+glider_diagonal_ne = [
     [1,1,1],
     [0,0,1],
     [0,1,0],
 ]
 
-gliderDiagonalNW = [
+glider_diagonal_nw = [
     [1,1,1],
     [1,0,0],
     [0,1,0],
 ]
 
-gliderDiagonalSO = [
+glider_diagonal_so = [
     [0,1,0],
     [1,0,0],
     [1,1,1],
 ]
 
-gliderHorizontal = [
+glider_horizontal = [
     [0,1,1,1,1,1,1],
     [1,0,0,0,0,0,1],
     [0,0,0,0,0,0,1],
