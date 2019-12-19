@@ -291,7 +291,7 @@ class SocketDispatcher(asyncore.dispatcher):
         for key in self.lobbys.keys():
             result += [{
                 'lobbyname': key,
-                'joinable': self.lobbys[key].is_full,
+                'joinable': ! self.lobbys[key].is_full,
                 'running': self.lobbys[key].is_running
                 }]
         return result
@@ -305,5 +305,5 @@ if __name__ == '__main__':
     logging.info('Started server at {}'.format(start_time))
     logging.info('==='*30)
 
-    socketserver = SocketDispatcher('localhost', 1111)
+    socketserver = SocketDispatcher('0.0.0.0', 1111)
     asyncore.loop()
