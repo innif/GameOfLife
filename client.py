@@ -101,14 +101,20 @@ class NetworkClient:
         '''
         polls server packets and adds them into the queue after they were converted from json objects
         '''
-        # Make sure it end for an delimiter
-        data = self.sock.recv(4096).decode()
+        try:
+            # Make sure it end for an delimiter
+            data = self.sock.recv(4096, socket.MSG_DONTWAIT).decode()
+        except BlockingIOError:
+            data = '' 
 
         if data == '':
             return
 
         while data[-2:] != self.delimiter:
-            data += self.sock.recv(4096).decode()
+            try:
+                data += self.sock.recv(4096).decode()
+            except BlockingIOError:
+                pass
 
         new_commands = self.split_packets(data)
         self.queue += new_commands
