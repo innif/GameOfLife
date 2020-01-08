@@ -7,12 +7,13 @@ import logging
 
 class Screen():
     def __init__(self, fieldSize):
-        self.fieldSize = w, h = fieldSize
-        self.pixels = np.zeros(fieldSize)
+        w, h = fieldSize 
+        self.fieldSize = h, w
+        self.rgb_matrix = np.zeros((h,w))
         self.colors = colorsets.blue
 
-    def get_screen(self):
-        s = pygame.pixelcopy.make_surface(self.pixels)
+    def getScreen(self):
+        s = pygame.pixelcopy.make_surface(self.rgb_matrix)
         return s
 
     def set_colors(self, colors):
@@ -29,8 +30,7 @@ class Screen():
 
         for p in pointlist:
             x, y = p
-            self.pixels[(drawX+x) % w, (drawY+y) %
-                        h, :] = self.colors.get('preview')
+            self.rgb_matrix[(drawX+x)%w, (drawY+y)%h, :] = self.colors.get('preview')
 
     def draw_field(self, field):
         # background = np.ones((field.shape[0], field.shape[1], 3), 0)
@@ -39,8 +39,8 @@ class Screen():
         # foreground = np.ones((field.shape[0], field.shape[1], 3), 0)
         # foreground *= np.array(self.colors.get('pixel'))
 
-        field = field.field
-        field = np.swapaxes(field, 0, 1)
+        field = field.getArray()
+        #field = np.swapaxes(field,0,1)
 
         bColor = np.array(self.colors.get('background'))
         fColor = np.array(self.colors.get('pixel'))
@@ -50,4 +50,4 @@ class Screen():
         for i in range(3):
             pixels[:, :, i] = np.where(field, fColor[i], bColor[i])
 
-        self.pixels = pixels
+        self.rgb_matrix = pixels
